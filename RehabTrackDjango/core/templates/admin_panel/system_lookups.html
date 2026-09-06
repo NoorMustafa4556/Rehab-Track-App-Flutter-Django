@@ -1,0 +1,172 @@
+{% extends "admin_panel/base_admin.html" %}
+
+{% block title %}System Lookups - RehabTrack Admin{% endblock %}
+{% block page_title %}System Lookups Configuration{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <!-- Nav Tabs -->
+        <ul class="nav nav-tabs nav-fill" id="lookupsTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active fw-medium" id="roles-tab" data-bs-toggle="tab" data-bs-target="#roles" type="button" role="tab">Roles</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-medium" id="specs-tab" data-bs-toggle="tab" data-bs-target="#specs" type="button" role="tab">Specializations</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-medium" id="restypes-tab" data-bs-toggle="tab" data-bs-target="#restypes" type="button" role="tab">Resource Types</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-medium" id="metrics-tab" data-bs-toggle="tab" data-bs-target="#metrics" type="button" role="tab">Assessment Metrics</button>
+            </li>
+        </ul>
+        
+        <!-- Tab Content -->
+        <div class="tab-content pt-4" id="lookupsTabContent">
+            
+            <!-- Roles Tab -->
+            <div class="tab-pane fade show active" id="roles" role="tabpanel">
+                <div class="alert alert-info border-0 shadow-sm"><i class="fas fa-info-circle"></i> Roles are system-critical. Adding or deleting roles is restricted to prevent system instability.</div>
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle">
+                        <thead class="table-light"><tr><th>ID</th><th>Role Name</th><th>Actions</th></tr></thead>
+                        <tbody>
+                            {% for role in roles %}
+                            <tr>
+                                <td>{{ role.id }}</td>
+                                <td><span class="badge bg-secondary">{{ role.role_name }}</span></td>
+                                <td><span class="text-muted"><i class="fas fa-lock"></i> Protected</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Specializations Tab -->
+            <div class="tab-pane fade" id="specs" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="card bg-light border-0"><div class="card-body">
+                            <h6>Add Specialization</h6>
+                            <form method="POST" action="{% url 'admin_lookups' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="lookup_type" value="specialization">
+                                <input type="text" name="name" class="form-control mb-2" placeholder="Name" required>
+                                <textarea name="description" class="form-control mb-2" placeholder="Description"></textarea>
+                                <button type="submit" class="btn btn-sm btn-primary w-100">Add</button>
+                            </form>
+                        </div></div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light"><tr><th>Name</th><th>Description</th><th>Actions</th></tr></thead>
+                                <tbody>
+                                    {% for sp in specializations %}
+                                    <tr id="row-specialization-{{ sp.id }}">
+                                        <td class="fw-medium">{{ sp.name }}</td>
+                                        <td>{{ sp.description }}</td>
+                                        <td><button class="btn btn-sm btn-outline-danger" onclick="deleteLookup('specialization', {{ sp.id }}, '{{ sp.name }}')"><i class="fas fa-trash"></i></button></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resource Types Tab -->
+            <div class="tab-pane fade" id="restypes" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="card bg-light border-0"><div class="card-body">
+                            <h6>Add Resource Type</h6>
+                            <form method="POST" action="{% url 'admin_lookups' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="lookup_type" value="resource_type">
+                                <input type="text" name="type_name" class="form-control mb-2" placeholder="Type Name" required>
+                                <button type="submit" class="btn btn-sm btn-primary w-100">Add</button>
+                            </form>
+                        </div></div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light"><tr><th>Type Name</th><th>Actions</th></tr></thead>
+                                <tbody>
+                                    {% for rt in resource_types %}
+                                    <tr id="row-resource_type-{{ rt.id }}">
+                                        <td class="fw-medium">{{ rt.name }}</td>
+                                        <td><button class="btn btn-sm btn-outline-danger" onclick="deleteLookup('resource_type', {{ rt.id }}, '{{ rt.name }}')"><i class="fas fa-trash"></i></button></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assessment Metrics Tab -->
+            <div class="tab-pane fade" id="metrics" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="card bg-light border-0"><div class="card-body">
+                            <h6>Add Assessment Metric</h6>
+                            <form method="POST" action="{% url 'admin_lookups' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="lookup_type" value="assessment_metric">
+                                <input type="text" name="metric_name" class="form-control mb-2" placeholder="Metric Name" required>
+                                <textarea name="description" class="form-control mb-2" placeholder="Description"></textarea>
+                                <button type="submit" class="btn btn-sm btn-primary w-100">Add</button>
+                            </form>
+                        </div></div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light"><tr><th>Metric Name</th><th>Unit</th><th>Actions</th></tr></thead>
+                                <tbody>
+                                    {% for am in metrics %}
+                                    <tr id="row-assessment_metric-{{ am.id }}">
+                                        <td class="fw-medium">{{ am.metric_name }}</td>
+                                        <td>{{ am.unit }}</td>
+                                        <td><button class="btn btn-sm btn-outline-danger" onclick="deleteLookup('assessment_metric', {{ am.id }}, '{{ am.metric_name }}')"><i class="fas fa-trash"></i></button></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    async function deleteLookup(type, id, name) {
+        if (!confirm(`Are you sure you want to delete ${name}? Note: This action will be blocked if any records are currently linked to it.`)) return;
+        
+        try {
+            const response = await fetchWithCSRF(`/admin-panel/settings/lookups/${type}/${id}/delete/`, { method: 'POST' });
+            const data = await response.json();
+            
+            if (response.ok && data.success) {
+                const row = document.getElementById(`row-${type}-${id}`);
+                row.remove();
+            } else {
+                alert(data.error || 'Cannot delete due to linked dependencies.');
+            }
+        } catch(e) {
+            alert('Failed to connect to the server.');
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends "admin_panel/base_admin.html" %}
+
+{% block title %}Users & Roles - RehabTrack Admin{% endblock %}
+{% block page_title %}Users & Roles Management{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Create User Form -->
+    <div class="col-lg-4 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h5 class="fw-bold mb-0">Create New Account</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{% url 'admin_users' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Role</label>
+                        <select name="role_id" class="form-select" required>
+                            <option value="">Select Role...</option>
+                            {% for role in roles %}
+                                <option value="{{ role.id }}">{{ role.role_name }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-info"><i class="fas fa-info-circle"></i> Selecting Clinician or Patient will auto-create their respective profile record.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Username</label>
+                        <input type="text" name="username" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Email</label>
+                        <input type="email" name="email" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Initial Password</label>
+                        <input type="text" name="password" class="form-control" required placeholder="Type a strong password">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 mt-2">Create Account</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Users List -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h5 class="fw-bold mb-0">All Users</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Joined</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for u in page_obj %}
+                            <tr>
+                                <td class="fw-medium">{{ u.username }}</td>
+                                <td>{{ u.email }}</td>
+                                <td>
+                                    {% if u.role_id.role_name == 'Admin' %}
+                                        <span class="badge bg-danger">{{ u.role_id.role_name }}</span>
+                                    {% elif u.role_id.role_name == 'Clinician' %}
+                                        <span class="badge bg-info">{{ u.role_id.role_name }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ u.role_id.role_name }}</span>
+                                    {% endif %}
+                                </td>
+                                <td><small class="text-muted">{{ u.date_joined|date:"M d, Y" }}</small></td>
+                                <td>
+                                    {% if u.is_active %}
+                                        <span class="text-success"><i class="fas fa-check-circle"></i> Active</span>
+                                    {% else %}
+                                        <span class="text-danger"><i class="fas fa-times-circle"></i> Inactive</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">No users found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% include "admin_panel/partials/pagination.html" %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,193 @@
+{% extends "portal/base_portal.html" %}
+
+{% block title %}Patient Details - RehabTrack Portal{% endblock %}
+{% block page_title %}Patient Details: {{ patient.user_id.username }}{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Patient Details Header -->
+    <div class="col-12">
+        <div class="card border-0 shadow-sm bg-portal text-white" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);">
+            <div class="card-body p-4 p-md-5 d-flex flex-column flex-md-row justify-content-between align-items-center">
+                <div class="mb-3 mb-md-0 text-center text-md-start">
+                    <h3 class="fw-bold mb-2">{{ patient.user_id.username }}</h3>
+                    <p class="mb-0 opacity-75">
+                        <i class="fas fa-calendar-alt me-2"></i> Plan Started: {{ active_plan.start_date|date:"F j, Y" }}
+                    </p>
+                    <p class="mb-0 mt-2 opacity-75">
+                        <i class="fas fa-redo me-2"></i> Current Cycle: {{ active_plan.current_cycle }}
+                    </p>
+                </div>
+                <div class="text-center">
+                    <span class="badge bg-light text-primary fs-5 px-4 py-2 rounded-pill shadow-sm">
+                        {{ active_plan.status }}
+                    </span>
+                    <div class="mt-3">
+                        <a href="{% url 'download_report' active_plan.id %}" target="_blank" class="btn btn-sm btn-outline-light me-2">
+                            <i class="fas fa-file-pdf me-1"></i> Download PDF Report
+                        </a>
+                        <button class="btn btn-sm btn-outline-light" data-bs-toggle="modal" data-bs-target="#addLogModal">
+                            <i class="fas fa-plus me-1"></i> Add Progress Log
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Goals & Notes -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h5 class="fw-bold mb-0 text-primary"><i class="fas fa-bullseye me-2"></i>Plan Goals</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">{{ active_plan.goals|linebreaks }}</p>
+                <hr>
+                <div class="text-muted small">
+                    <h6 class="fw-bold text-dark mb-1">Medical History</h6>
+                    {{ patient.medical_history|default:"No medical history provided." }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Metrics Chart -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0 text-success"><i class="fas fa-chart-line me-2"></i>Progress Metrics</h5>
+            </div>
+            <div class="card-body">
+                {% if progress_logs %}
+                    <canvas id="metricsChart" style="max-height: 250px;"></canvas>
+                {% else %}
+                    <!-- EMPTY STATE -->
+                    <div class="text-center text-muted py-5 d-flex flex-column justify-content-center h-100">
+                        <i class="fas fa-chart-bar fs-1 mb-3 opacity-25"></i>
+                        <h6 class="fw-bold">No Metrics Recorded</h6>
+                        <p class="small mb-0">Record a progress log to start tracking metrics for this patient.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Logs History -->
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h5 class="fw-bold mb-0 text-info"><i class="fas fa-history me-2"></i>Progress Timeline</h5>
+            </div>
+            <div class="card-body">
+                {% if progress_logs %}
+                    <div class="timeline mt-3">
+                        {% for log in progress_logs %}
+                            <div class="border-start border-2 border-info ps-3 pb-4 ms-2 position-relative">
+                                <span class="position-absolute start-0 top-0 translate-middle p-2 bg-info border border-light rounded-circle" style="margin-top: 5px;"></span>
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="fw-bold mb-1">{{ log.log_date|date:"F j, Y" }}</h6>
+                                    <small class="text-muted">By: {{ log.created_by.username }}</small>
+                                </div>
+                                <p class="mb-2 text-dark">{{ log.treatment_given }}</p>
+                                {% if log.clinician_notes %}
+                                    <div class="bg-light p-2 rounded text-muted small mb-2 border-start border-3 border-secondary">
+                                        <strong>Private Notes:</strong> {{ log.clinician_notes }}
+                                    </div>
+                                {% endif %}
+                                
+                                {% if log.metric_values.all %}
+                                    <div class="d-flex flex-wrap gap-2 mt-2">
+                                        {% for pmv in log.metric_values.all %}
+                                            <span class="badge bg-light text-dark border border-secondary border-opacity-25 shadow-sm">
+                                                {{ pmv.metric_id.metric_name }}: <span class="text-primary">{{ pmv.value }} {{ pmv.metric_id.unit }}</span>
+                                            </span>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <!-- EMPTY STATE -->
+                    <div class="text-center text-muted py-5 d-flex flex-column justify-content-center h-100">
+                        <i class="fas fa-folder-open fs-1 mb-3 opacity-25"></i>
+                        <h6 class="fw-bold">No Progress Recorded Yet</h6>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Progress Log Modal -->
+<div class="modal fade" id="addLogModal" tabindex="-1" aria-labelledby="addLogModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white border-0">
+                <h5 class="modal-title fw-bold" id="addLogModalLabel"><i class="fas fa-plus-circle me-2"></i>Add Progress Log</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{% url 'portal_patient_detail' patient.id %}">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Treatment Given (Required)</label>
+                        <textarea name="treatment_given" class="form-control" rows="3" required placeholder="Describe the treatment or exercises performed today..."></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Private Clinical Notes</label>
+                        <textarea name="clinician_notes" class="form-control" rows="2" placeholder="Internal notes (Patient cannot see this)"></textarea>
+                    </div>
+                    
+                    <h6 class="fw-bold text-success border-bottom pb-2 mb-3"><i class="fas fa-chart-line me-2"></i>Record Metrics</h6>
+                    <div class="row g-3">
+                        {% for metric in all_metrics %}
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted mb-1">{{ metric.metric_name }} ({{ metric.unit }})</label>
+                            <input type="number" step="any" name="metric_{{ metric.id }}" class="form-control" 
+                                   {% if metric.min_value is not None %}min="{{ metric.min_value }}"{% endif %} 
+                                   {% if metric.max_value is not None %}max="{{ metric.max_value }}"{% endif %}
+                                   placeholder="e.g. {% if metric.min_value is not None %}{{ metric.min_value }}{% else %}0{% endif %} - {% if metric.max_value is not None %}{{ metric.max_value }}{% else %}100{% endif %}">
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary px-4">Save Progress Log</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if progress_logs and chart_labels != "[]" %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('metricsChart').getContext('2d');
+        const labels = {{ chart_labels|safe }};
+        const datasets = {{ chart_datasets|safe }};
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: { mode: 'index', intersect: false }
+                },
+                scales: {{ chart_scales|safe }}
+            }
+        });
+    });
+</script>
+{% endif %}
+{% endblock %}

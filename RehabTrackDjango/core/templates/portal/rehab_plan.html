@@ -1,0 +1,161 @@
+{% extends "portal/base_portal.html" %}
+
+{% block title %}My Rehab Plan - RehabTrack Portal{% endblock %}
+{% block page_title %}My Rehabilitation Plan{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    {% if active_plan %}
+    <!-- Plan Details Header -->
+    <div class="col-12">
+        <div class="card border-0 shadow-sm bg-portal text-white" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);">
+            <div class="card-body p-4 p-md-5 d-flex flex-column flex-md-row justify-content-between align-items-center">
+                <div class="mb-3 mb-md-0 text-center text-md-start">
+                    <h3 class="fw-bold mb-2">Cycle {{ active_plan.current_cycle }} Plan</h3>
+                    <p class="mb-0 opacity-75">
+                        <i class="fas fa-calendar-alt me-2"></i> Started: {{ active_plan.start_date|date:"F j, Y" }}
+                        {% if active_plan.end_date %}
+                        | Ends: {{ active_plan.end_date|date:"F j, Y" }}
+                        {% endif %}
+                    </p>
+                    <p class="mb-0 mt-2 opacity-75">
+                        <i class="fas fa-user-md me-2"></i> Clinician: {{ active_plan.clinician_id.user_id.username }}
+                    </p>
+                </div>
+                <div class="text-center">
+                    <span class="badge bg-light text-primary fs-5 px-4 py-2 rounded-pill shadow-sm d-block mb-3">
+                        {{ active_plan.status }}
+                    </span>
+                    <a href="{% url 'download_report' active_plan.id %}" target="_blank" class="btn btn-outline-light btn-sm rounded-pill px-3 shadow-sm">
+                        <i class="fas fa-file-pdf me-1"></i> Download Report
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Goals & Notes -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h5 class="fw-bold mb-0 text-primary"><i class="fas fa-bullseye me-2"></i>Primary Goals</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">{{ active_plan.goals|linebreaks }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Metrics Chart -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h5 class="fw-bold mb-0 text-success"><i class="fas fa-chart-line me-2"></i>Progress Metrics</h5>
+            </div>
+            <div class="card-body">
+                {% if progress_logs %}
+                    <canvas id="metricsChart" style="max-height: 250px;"></canvas>
+                {% else %}
+                    <!-- EMPTY STATE -->
+                    <div class="text-center text-muted py-5 d-flex flex-column justify-content-center h-100">
+                        <i class="fas fa-chart-bar fs-1 mb-3 opacity-25"></i>
+                        <h6 class="fw-bold">No Metrics Recorded</h6>
+                        <p class="small mb-0">Once progress logs are added, your trend chart will appear here.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Logs History -->
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h5 class="fw-bold mb-0 text-info"><i class="fas fa-history me-2"></i>Progress Timeline</h5>
+            </div>
+            <div class="card-body">
+                {% if progress_logs %}
+                    <div class="timeline mt-3">
+                        {% for log in progress_logs %}
+                            <div class="border-start border-2 border-info ps-3 pb-4 ms-2 position-relative">
+                                <span class="position-absolute start-0 top-0 translate-middle p-2 bg-info border border-light rounded-circle" style="margin-top: 5px;"></span>
+                                <h6 class="fw-bold mb-1">{{ log.log_date|date:"F j, Y" }}</h6>
+                                <p class="mb-2 text-dark">{{ log.treatment_given }}</p>
+                                {% if log.clinician_notes %}
+                                    <div class="bg-light p-2 rounded text-muted small mb-2">
+                                        <strong>Notes:</strong> {{ log.clinician_notes }}
+                                    </div>
+                                {% endif %}
+                                
+                                {% if log.metric_values.all %}
+                                    <div class="d-flex flex-wrap gap-2 mt-2">
+                                        {% for pmv in log.metric_values.all %}
+                                            <span class="badge bg-light text-dark border border-secondary border-opacity-25 shadow-sm">
+                                                {{ pmv.metric_id.metric_name }}: <span class="text-primary">{{ pmv.value }} {{ pmv.metric_id.unit }}</span>
+                                            </span>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <!-- EMPTY STATE -->
+                    <div class="text-center text-muted py-5 d-flex flex-column justify-content-center h-100">
+                        <i class="fas fa-folder-open fs-1 mb-3 opacity-25"></i>
+                        <h6 class="fw-bold">No Progress Recorded Yet</h6>
+                        <p class="small mb-0">Your clinician has not recorded any progress logs for this cycle.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    {% else %}
+    <!-- EMPTY STATE NO PLAN -->
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-clipboard fs-1 mb-3 d-block opacity-25 text-primary"></i>
+                <h4 class="fw-bold">No Active Rehabilitation Plan</h4>
+                <p class="mb-0 text-muted">You have not been assigned an active plan by a clinician yet. Please contact your clinic.</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if progress_logs and chart_labels != "[]" %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('metricsChart').getContext('2d');
+        const labels = {{ chart_labels|safe }};
+        const datasets = {{ chart_datasets|safe }};
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                    }
+                },
+                scales: {{ chart_scales|safe }}
+            }
+        });
+    });
+</script>
+{% endif %}
+{% endblock %}

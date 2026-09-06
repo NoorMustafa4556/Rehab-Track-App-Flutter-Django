@@ -1,0 +1,85 @@
+{% extends "admin_panel/base_admin.html" %}
+
+{% block title %}Appointments - RehabTrack Admin{% endblock %}
+{% block page_title %}Appointments Scheduling{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0">All Appointments</h5>
+        <form class="d-flex" method="GET">
+            <select name="status" class="form-select form-select-sm me-2">
+                <option value="">All Statuses</option>
+                <option value="Booked" {% if status_filter == 'Booked' %}selected{% endif %}>Booked</option>
+                <option value="Completed" {% if status_filter == 'Completed' %}selected{% endif %}>Completed</option>
+                <option value="Cancelled" {% if status_filter == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                <option value="Rescheduled" {% if status_filter == 'Rescheduled' %}selected{% endif %}>Rescheduled</option>
+            </select>
+            <button class="btn btn-sm btn-outline-primary" type="submit">Filter</button>
+            {% if status_filter %}
+                <a href="{% url 'admin_appointments' %}" class="btn btn-sm btn-outline-secondary ms-2">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Patient</th>
+                        <th>Clinician</th>
+                        <th>Resource</th>
+                        <th>Status</th>
+                        <th>Type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in page_obj %}
+                    <tr>
+                        <td>
+                            <div class="fw-medium">{{ a.start_time|date:"M d, Y" }}</div>
+                            <small class="text-muted">{{ a.start_time|time:"H:i" }} - {{ a.end_time|time:"H:i" }}</small>
+                        </td>
+                        <td>{{ a.patient_id.user_id.username|title }}</td>
+                        <td>Dr. {{ a.clinician_id.user_id.username|title }}</td>
+                        <td>
+                            {% if a.resource_id %}
+                                {{ a.resource_id.name }}
+                            {% else %}
+                                <span class="text-muted">None</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if a.status == 'Booked' %}
+                                <span class="badge bg-primary">{{ a.status }}</span>
+                            {% elif a.status == 'Completed' %}
+                                <span class="badge bg-success">{{ a.status }}</span>
+                            {% elif a.status == 'Cancelled' %}
+                                <span class="badge bg-danger">{{ a.status }}</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">{{ a.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if a.is_auto_scheduled %}
+                                <span class="badge border border-info text-info"><i class="fas fa-robot"></i> AI Scheduled</span>
+                            {% else %}
+                                <span class="badge border border-secondary text-secondary"><i class="fas fa-user-edit"></i> Manual</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">No appointments found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% include "admin_panel/partials/pagination.html" %}
+    </div>
+</div>
+{% endblock %}

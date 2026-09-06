@@ -1,0 +1,19 @@
+# Django
+__pycache__/
+*.py[cod]
+*$py.class
+*.sqlite3
+.env
+venv/
+env/
+ENV/
+.vscode/
+.idea/
+
+# Flutter
+.dart_tool/
+build/
+.pub-cache/
+.pub/
+/build/
+*.DS_Store

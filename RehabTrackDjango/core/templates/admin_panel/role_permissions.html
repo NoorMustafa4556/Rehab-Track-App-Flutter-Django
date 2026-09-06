@@ -1,0 +1,89 @@
+{% extends "admin_panel/base_admin.html" %}
+
+{% block title %}Role Permissions - RehabTrack Admin{% endblock %}
+{% block page_title %}Dynamic Role Permissions{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom-0 pt-4">
+                <h6 class="fw-bold mb-0">Select Role</h6>
+            </div>
+            <div class="card-body">
+                <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                    {% for role in roles %}
+                    <button class="nav-link text-start {% if forloop.first %}active{% endif %}" id="v-pills-role-{{ role.id }}-tab" data-bs-toggle="pill" data-bs-target="#v-pills-role-{{ role.id }}" type="button" role="tab" aria-controls="v-pills-role-{{ role.id }}" aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">
+                        <i class="fas fa-user-shield me-2"></i>{{ role.role_name }}
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-9">
+        <div class="tab-content" id="v-pills-tabContent">
+            {% for role in roles %}
+            <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" id="v-pills-role-{{ role.id }}" role="tabpanel" aria-labelledby="v-pills-role-{{ role.id }}-tab">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom-0 pt-4">
+                        <h5 class="fw-bold mb-0">Permissions for {{ role.role_name }}</h5>
+                        <p class="text-muted small mb-0 mt-1">Check the abilities this role should have.</p>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{% url 'admin_role_permissions' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="role_id" value="{{ role.id }}">
+                            
+                            <div class="row g-4">
+                                {% for module_name, perms in modules.items %}
+                                <div class="col-md-6">
+                                    <div class="card h-100 border bg-light">
+                                        <div class="card-header fw-bold bg-white">
+                                            {{ module_name }}
+                                        </div>
+                                        <div class="card-body p-3">
+                                            {% for perm in perms %}
+                                            <div class="form-check mb-2">
+                                                {% load custom_filters %}
+                                                
+                                                {% comment %}Check if this perm is active for this role{% endcomment %}
+                                                {% with role_active_perms=active_perms|get_item:role.id %}
+                                                
+                                                {% comment %}Determine if this is a critical Admin-only perm that shouldn't be unchecked{% endcomment %}
+                                                {% if role.role_name == 'Admin' and perm.id in critical_admin_perms %}
+                                                    <input class="form-check-input" type="checkbox" name="permissions" value="{{ perm.id }}" id="perm_{{ role.id }}_{{ perm.id }}" checked disabled>
+                                                    <input type="hidden" name="permissions" value="{{ perm.id }}">
+                                                {% else %}
+                                                    <input class="form-check-input" type="checkbox" name="permissions" value="{{ perm.id }}" id="perm_{{ role.id }}_{{ perm.id }}"
+                                                        {% if perm.id in role_active_perms %}checked{% endif %}>
+                                                {% endif %}
+                                                
+                                                {% endwith %}
+                                                
+                                                <label class="form-check-label" for="perm_{{ role.id }}_{{ perm.id }}">
+                                                    {{ perm.permission_name }}
+                                                </label>
+                                                {% if perm.description %}
+                                                <div class="text-muted small" style="font-size: 0.8em; margin-top:-3px;">{{ perm.description }}</div>
+                                                {% endif %}
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="mt-4 pt-3 border-top text-end">
+                                <button type="submit" class="btn btn-primary px-4"><i class="fas fa-save me-2"></i>Save Permissions for {{ role.role_name }}</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends "admin_panel/base_admin.html" %}
+
+{% block title %}Clinician Detail - RehabTrack Admin{% endblock %}
+{% block page_title %}Clinician Profile: Dr. {{ clinician.user_id.username|title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Clinician Info & Availability Override -->
+    <div class="col-lg-4 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h5 class="fw-bold mb-0">Availability Settings</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush mb-4">
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span class="text-muted">Specialization</span>
+                        <span class="fw-medium">{{ clinician.specialization_id.name|default:"Unassigned" }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0 border-0">
+                        <span class="text-muted">Email</span>
+                        <span class="fw-medium">{{ clinician.user_id.email }}</span>
+                    </li>
+                </ul>
+
+                <hr class="text-muted">
+                <h6 class="fw-bold">Override Availability</h6>
+                <p class="small text-muted mb-3">Admins can explicitly set availability if the clinician is unable to do so via the app.</p>
+                
+                <form method="POST" action="{% url 'admin_clinician_detail' clinician.id %}">
+                    {% csrf_token %}
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="availabilitySwitch" name="is_available" {% if clinician.is_available %}checked{% endif %}>
+                        <label class="form-check-label" for="availabilitySwitch">Available for Appointments</label>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Working Hours (JSON/Text)</label>
+                        <textarea name="working_hours" class="form-control" rows="4">{{ clinician.working_hours|default:"{}" }}</textarea>
+                        <small class="text-info">Format strictly follows app definitions.</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Save Changes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Active Rehab Plans -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h5 class="fw-bold mb-0">Active Assigned Plans</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light"><tr><th>Plan ID</th><th>Patient</th><th>Start Date</th><th>Goals</th></tr></thead>
+                        <tbody>
+                            {% for p in active_plans %}
+                            <tr>
+                                <td><span class="fw-medium">#{{ p.id }}</span></td>
+                                <td>{{ p.patient_id.user_id.username|title }}</td>
+                                <td>{{ p.start_date|date:"M d, Y" }}</td>
+                                <td><span class="d-inline-block text-truncate" style="max-width: 200px;">{{ p.goals }}</span></td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-muted">No active plans assigned currently.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

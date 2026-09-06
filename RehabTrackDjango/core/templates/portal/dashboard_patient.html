@@ -1,0 +1,109 @@
+{% extends "portal/base_portal.html" %}
+
+{% block title %}Patient Dashboard - RehabTrack Portal{% endblock %}
+{% block page_title %}Patient Dashboard{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Active Rehabilitation Plan Card -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h5 class="fw-bold mb-0 text-primary"><i class="fas fa-clipboard-list me-2"></i>My Rehabilitation Plan</h5>
+            </div>
+            <div class="card-body">
+                {% if active_plan %}
+                    <div class="alert alert-info border-0 shadow-sm d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>Status:</strong> {{ active_plan.status }}<br>
+                            <strong>Cycle:</strong> {{ active_plan.current_cycle }}<br>
+                            <strong>Started:</strong> {{ active_plan.start_date|date:"F j, Y" }}
+                        </div>
+                        <a href="{% url 'portal_rehab_plan' %}" class="btn btn-outline-info">View Full Plan</a>
+                    </div>
+                    
+                    <h6 class="fw-bold mt-4">Plan Goals</h6>
+                    <p class="text-muted">{{ active_plan.goals|linebreaks }}</p>
+                    
+                {% else %}
+                    <!-- EMPTY STATE -->
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-clipboard fs-1 mb-3 d-block opacity-25"></i>
+                        <h5 class="fw-bold">No Active Rehabilitation Plan</h5>
+                        <p class="mb-0">You have not been assigned an active plan by a clinician yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Appointment Card -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h5 class="fw-bold mb-0 text-success"><i class="fas fa-calendar-alt me-2"></i>Next Appointment</h5>
+            </div>
+            <div class="card-body">
+                {% if upcoming_appt %}
+                    <div class="bg-light p-3 rounded text-center shadow-sm">
+                        <h4 class="text-success mb-0 fw-bold">{{ upcoming_appt.start_time|date:"F j" }}</h4>
+                        <p class="text-muted mb-2">{{ upcoming_appt.start_time|time:"g:i A" }} - {{ upcoming_appt.end_time|time:"g:i A" }}</p>
+                        <p class="mb-0"><i class="fas fa-user-md me-1 text-secondary"></i> {{ upcoming_appt.clinician_id.user_id.username }}</p>
+                        {% if upcoming_appt.resource_id %}
+                            <p class="mb-0 small text-muted"><i class="fas fa-map-marker-alt me-1"></i> {{ upcoming_appt.resource_id.name }}</p>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <!-- EMPTY STATE -->
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-calendar-times fs-1 mb-3 d-block opacity-25"></i>
+                        <h6 class="fw-bold">No Upcoming Appointments</h6>
+                        <p class="small mb-0">You do not have any scheduled appointments at this time.</p>
+                        <a href="#" class="btn btn-sm btn-outline-success mt-3">Book Appointment</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Progress Summary -->
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h5 class="fw-bold mb-0 text-info"><i class="fas fa-chart-line me-2"></i>Recent Progress Logs</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_logs %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Treatment Given</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in recent_logs %}
+                                <tr>
+                                    <td>{{ log.log_date|date:"M d, Y" }}</td>
+                                    <td>{{ log.treatment_given|truncatechars:100 }}</td>
+                                    <td><a href="#" class="btn btn-sm btn-light">View Details</a></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <!-- EMPTY STATE -->
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-chart-area fs-1 mb-3 d-block opacity-25"></i>
+                        <h6 class="fw-bold">No Progress Logs Available</h6>
+                        <p class="small mb-0">Your progress metrics will appear here once your clinician logs them.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

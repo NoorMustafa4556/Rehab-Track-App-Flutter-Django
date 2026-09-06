@@ -1,0 +1,85 @@
+{% extends "portal/base_portal.html" %}
+
+{% block title %}My Availability - RehabTrack Portal{% endblock %}
+{% block page_title %}Manage Availability{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 pt-4 pb-3">
+                <h5 class="fw-bold mb-0 text-primary"><i class="fas fa-clock me-2"></i>Upcoming 14 Days Schedule</h5>
+            </div>
+            <div class="card-body p-0">
+                {% if schedule %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4">Date</th>
+                                    <th>Hours</th>
+                                    <th>Status</th>
+                                    <th class="text-end pe-4">Manage</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for slot in schedule %}
+                                <tr>
+                                    <td class="ps-4 fw-bold text-dark">{{ slot.date|date:"l, F j" }}</td>
+                                    <td>
+                                        {% if not slot.is_leave %}
+                                            {{ slot.start_time|time:"g:i A" }} - {{ slot.end_time|time:"g:i A" }}
+                                        {% else %}
+                                            <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if slot.is_leave %}
+                                            <span class="badge bg-danger rounded-pill px-3">On Leave</span>
+                                            {% if slot.reason %}
+                                                <small class="d-block text-muted mt-1">{{ slot.reason }}</small>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-success rounded-pill px-3">Available</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <form method="POST" action="{% url 'portal_availability' %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="slot_id" value="{{ slot.id }}">
+                                            {% if slot.is_leave %}
+                                                <button type="submit" name="action" value="mark_available" class="btn btn-sm btn-outline-success shadow-sm">Mark Available</button>
+                                            {% else %}
+                                                <button type="submit" name="action" value="mark_leave" class="btn btn-sm btn-outline-danger shadow-sm">Mark Leave</button>
+                                            {% endif %}
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <!-- EMPTY STATE -->
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-calendar-times fs-1 mb-3 d-block opacity-25"></i>
+                        <h5 class="fw-bold">No Schedule Generated</h5>
+                        <p class="mb-0">Your availability schedule has not been generated for the upcoming days yet.</p>
+                        <p class="small">Please contact the admin or system orchestrator.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mt-4 mt-lg-0">
+        <div class="card border-0 shadow-sm bg-portal text-white" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);">
+            <div class="card-body p-4 text-center">
+                <i class="fas fa-calendar-check fa-3x mb-3 opacity-75"></i>
+                <h5 class="fw-bold">Why keep this updated?</h5>
+                <p class="small opacity-75 mb-0">Patients can only book appointments with you on dates and times where you are marked as Available. Marking yourself on leave will prevent new bookings.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
