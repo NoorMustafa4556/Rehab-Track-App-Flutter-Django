@@ -7,6 +7,7 @@ RehabTrack is a full-stack healthcare platform built with Django & Flutter. It f
 - **Frontend**: Flutter, Provider, Dio, fl_chart
 
 ## Features
+
 - Role-based Access (Admin, Clinician, Patient)
 - Dashboard overviews
 - Secure API endpoints with SimpleJWT
